@@ -1,10 +1,8 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 import config from 'config';
 const fetch = require('node-fetch');
-const Discord = require('discord.js');
 
 import { manamoji } from 'utils/manamoji';
-
 
 const Card = {
   name: 'card',
@@ -21,32 +19,27 @@ const Card = {
       name: 'set',
       description: 'A specific 3-letter set code to limit the search to.',
       type: 'string',
-      required: false,
     },
     {
       name: 'prices',
       description: 'Flag to show card prices and price history instead.',
       type: 'boolean',
-      required: false,
     },
     // {
     //   name: 'decks',
     //   description: 'Flag to show card matches in archetype decklists instead.',
     //   type: 'boolean',
-    //   required: false,
     // },
   ],
   async execute({ client, args }) {
 
-    const cardName = args?.name;
+    const name = args?.name;
     const set = args?.set;
     const prices = args?.prices;
     const decks = args?.decks;
 
-    const findEmoji = symbol => client.emojis.cache.find(emoji => emoji.name === symbol);
-
     try {
-      let scryfallURL = `https://api.scryfall.com/cards/named?fuzzy=${cardName}`;
+      let scryfallURL = `https://api.scryfall.com/cards/named?fuzzy=${name}`;
       if (set) scryfallURL += `&set=${set.replace(/[^0-9A-Z]+/gi,"")}`;
 
       let response = await fetch(scryfallURL);
@@ -54,7 +47,7 @@ const Card = {
       // Handle conditions for invalid Scryfall response by each query parameter and condition
       if (response.status !== 200) {
         // Get fuzzy response without set
-        const response_1 = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${cardName}`);
+        const response_1 = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${name}`);
         let data = await response_1.json();
         if (response_1.status !== 200) {
           if (data.object === "error" || data.type === "ambiguous")
@@ -62,6 +55,9 @@ const Card = {
           // Handle miscellaneous errors
           throw new Error(`The requested card could not be found.`);
         }
+
+        const sets_response = await fetch(`https://api.scryfall.com/sets/${data.set}`);
+        const set_data = await sets_response.json();
 
         // Get and handle missing card printings
         const response_2 = await fetch(data.prints_search_uri);
@@ -83,10 +79,11 @@ const Card = {
           },
           footer: {
             text: [
-              `🖌 ${data.artist}`,
-              `${data.set.toUpperCase()} (${data.lang.toUpperCase()}) #${data.collector_number}`,
-              data.rarity.replace(/^\w/, (c) => c.toUpperCase())
-            ].join(' • ')
+                `🖌 ${data.artist}`,
+                `# ${data.collector_number}/${set_data.printed_size}`,
+                `${data.set.toUpperCase()} (${data.lang.toUpperCase()})`,
+                data.rarity.replace(/^\w/, (c) => c.toUpperCase())
+              ].join(' • ')
           },
           color: 0xe74c3c,
           ephemeral: true,
@@ -96,7 +93,9 @@ const Card = {
         throw new Error(`An error occured while fetching the requested card.`);
       }
 
-      let data = await response.json();
+      const data = await response.json();
+      const sets_response = await fetch(`https://api.scryfall.com/sets/${data.set}`);
+      const set_data = await sets_response.json();
 
       const cardTitle = (!data?.card_faces) ? manamoji(
         client.guilds.resolve(config.emojiGuild),
@@ -111,7 +110,8 @@ const Card = {
 
       const footerText = [
           `🖌 ${data.artist}`,
-          `${data.set.toUpperCase()} (${data.lang.toUpperCase()}) #${data.collector_number}`,
+          `# ${data.collector_number}/${set_data.printed_size}`,
+          `${data.set.toUpperCase()} (${data.lang.toUpperCase()})`,
           data.rarity.replace(/^\w/, (c) => c.toUpperCase())
         ].join(' • ');
 
@@ -122,7 +122,7 @@ const Card = {
             client.guilds.resolve(config.emojiGuild),
             [data.type_line, data.oracle_text.replace(/\*/g, '\\*')].join('\n')
             .replace(/(\([^)]+\))/g, '*$1*')
-          )
+          );
 
           if (data?.flavor_text) cardText += `\n*${data.flavor_text.replace(/\*/g, '')}*`;
           if (data?.power && data?.toughness) cardText += `\n${data.power.replace(/\*/g, '\\*')}/${data.toughness.replace(/\*/g, '\\*')}`;
@@ -143,14 +143,14 @@ const Card = {
           let cardText = manamoji(
             client.guilds.resolve(config.emojiGuild),
             `**${data.card_faces[0].name}** ${data.card_faces[0].mana_cost}`
-          )
+          );
 
           cardText += "\n" + manamoji(
             client.guilds.resolve(config.emojiGuild),
             [data.card_faces[0].type_line, data.card_faces[0].oracle_text].join('\n')
             .replace(/\*/g, '\\*')
             .replace(/(\([^)]+\))/g, '*$1*')
-          )
+          );
 
           if (data.card_faces[0]?.flavor_text) cardText += `\n*${data.card_faces[0].flavor_text.replace(/\*/g, '')}*`;
           if (data.card_faces[0]?.power && data.card_faces[0]?.toughness) cardText += `\n${data.card_faces[0].power.replace(/\*/g, '\\*')}/${data.card_faces[0].toughness.replace(/\*/g, '\\*')}`;
@@ -159,14 +159,14 @@ const Card = {
           cardText += "\n---------\n" + manamoji(
             client.guilds.resolve(config.emojiGuild),
             `**${data.card_faces[1].name}** ${data.card_faces[1].mana_cost}`
-          )
+          );
 
           cardText += "\n" + manamoji(
             client.guilds.resolve(config.emojiGuild),
             [data.card_faces[1].type_line, data.card_faces[1].oracle_text].join('\n')
             .replace(/\*/g, '\\*')
             .replace(/(\([^)]+\))/g, '*$1*')
-          )
+          );
 
           if (data.card_faces[1]?.flavor_text) cardText += `\n*${data.card_faces[1].flavor_text.replace(/\*/g, '\\*')}*`;
           if (data.card_faces[1]?.power && data.card_faces[1]?.toughness) cardText += `\n${data.card_faces[1].power.replace(/\*/g, '\\*')}/${data.card_faces[1].toughness.replace(/\*/g, '\\*')}`;
@@ -188,16 +188,14 @@ const Card = {
       } else if (decks !== true) {
 
         const child_process = require("child_process");
-        const cardPrices = await child_process.execSync(`python ./src/utils/cardPrices.py --cardname \"${ data.name }\" --set \"${ data.set.toUpperCase() }\"`);
+        const cardPrices = await child_process.execSync(`python ./src/utils/cardPrices.py --cardname "${ data.name }" --set "${ data.set.toUpperCase() }"`);
 
         const json = cardPrices.toString().length > 2 ? JSON.parse(cardPrices.toString()) : {};
         const imageStream = cardPrices.toString().length > 2 ? new Buffer.from(json?.graph, 'base64') : {};
 
         const description = `Showing results for **${data.set_name}** (**${data.set.toUpperCase()}**):`;
 
-        function evalPrice(item) {
-          return typeof item === 'object' ? '—' : (item > -1 ? item : '—')
-        }
+        let evalPrice = (item) => typeof item === 'object' ? '—' : (item > -1 ? item : '—');
 
         const message = {
           title: `Price History for ${cardTitle}`,
@@ -214,7 +212,7 @@ const Card = {
             "text" : footerText,
           },
           color: '#3498DB',
-        }
+        };
 
         if (cardPrices.toString().length > 2) {
           message.url = json?.url;
@@ -247,7 +245,7 @@ const Card = {
     }  catch (error) {
       // console.error(
       //   chalk.cyan(`[/card]`)+
-      //   chalk.grey(` cardName: `) + chalk.green(`\"${cardName}\"`)+
+      //   chalk.grey(` name: `) + chalk.green(`\"${name}\"`)+
       //   chalk.grey(` set: `) + (!set ? chalk.white('None') : chalk.green(`\"${set}\"`))+
       //   chalk.grey(` prices: `) + (!prices ? chalk.white('None') : chalk.yellow(prices))+
       //   chalk.grey(` decks: `) + (!decks ? chalk.white('None') : chalk.yellow(decks))+

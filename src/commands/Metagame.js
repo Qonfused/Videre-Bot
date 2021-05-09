@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 import { formats, eventTypes } from 'utils/magic';
 
 const Metagame = {

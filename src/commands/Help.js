@@ -8,7 +8,7 @@ const Help = {
   execute({ client, interaction }) {
     try {
       let fields = [];
-      if (config.guild && interaction.guild_id === config.guild) {
+      if (config.guild && interaction?.guild_id === config.guild) {
         fields = client.commands.map(({ name, options, description }) => ({
             name: `/${name}${options?.map(({ name }) => ` \`${name}\``) || ''}`,
             value: description,
@@ -25,10 +25,7 @@ const Help = {
         fields: fields,
       };
     } catch (error) {
-      console.error(
-        chalk.cyan(`[/help]`)+
-        chalk.grey('\n>> ') + chalk.red(`Error: ${error.message}`)
-      );
+      console.error(chalk.cyan(`[/help]`)+chalk.grey('\n>> ')+chalk.red(`Error: ${error.message}`));
       return {
         title: 'Error',
         description: `An error occured while retrieving commands.`,

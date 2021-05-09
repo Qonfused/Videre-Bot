@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 
 const Debug = {
   name: 'debug',
@@ -33,7 +33,7 @@ const Debug = {
         // Add linebreak after second instance of comma
         .replace(/,/g, function (match) {
           t++; return (t === 2) ? ",\n" : match;
-        }) + '.'
+        }) + '.';
 
       let interaction_timestamp = Number(BigInt(interaction.id) >> 22n) + 1420070400000;
 

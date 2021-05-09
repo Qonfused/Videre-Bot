@@ -6,8 +6,14 @@ import { validateMessage, validateCommand } from 'utils/discord';
 import { INTERACTION_RESPONSE_TYPE, INTERACTION_RESPONSE_FLAGS } from 'constants';
 import config from 'config';
 
+// List of which commands were registered for the respective command types.
 let globalCommands = [];
 let guildCommands = [];
+
+// Count of commands that were patched, posted, or deleted.
+let updatedCommands = 0;
+let registeredCommands = 0;
+let removedCommands = 0;
 
 // An extended `Client` to support slash-command interactions and events.
 class Bot extends Client {
@@ -132,19 +138,23 @@ class Bot extends Client {
         if (globalCommands.includes(command.name)) {
           const globalCached = globalCache?.find(({ name }) => name === command.name);
           if (globalCached?.id) {
-            if(globalCached?.name !== data?.name || globalCached?.description !== data?.description || globalCached?.options !== data?.options) {
+            if(globalCached?.name !== validateCommand(command)?.name || globalCached?.description !== validateCommand(command)?.description || JSON.stringify(globalCached?.options) !== JSON.stringify(validateCommand(command)?.options)) {
+              updatedCommands++;
               await globalRemote().commands(globalCached.id).patch({ data });
             }
           } else {
+            registeredCommands++;
             await globalRemote().commands.post({ data });
           }
         } else if (config.guild) {
           const guildCached = guildCache?.find(({ name }) => name === command.name);
           if (guildCached?.id) {
-            if(guildCached?.name !== data?.name || guildCached?.description !== data?.description || guildCached?.options !== data?.options) {
+            if(guildCached?.name !== validateCommand(command)?.name || guildCached?.description !== validateCommand(command)?.description || JSON.stringify(guildCached?.options) !== JSON.stringify(validateCommand(command)?.options)) {
+              updatedCommands++;
               await guildRemote().commands(guildCached.id).patch({ data });
             }
           } else {
+            registeredCommands++;
             await guildRemote().commands.post({ data });
           }
         }
@@ -156,6 +166,7 @@ class Bot extends Client {
       globalCache.map(async command => {
         const exists = this.commands.get(command.name);
         if (!exists || !globalCommands.includes(command.name)) {
+          removedCommands++;
           await globalRemote().commands(command.id).delete();
         }
       })
@@ -166,10 +177,21 @@ class Bot extends Client {
       guildCache.map(async command => {
         const exists = this.commands.get(command.name);
         if (!exists || !guildCommands.includes(command.name)) {
+          removedCommands++;
           await guildRemote().commands(command.id).delete();
         }
       })
     );
+
+    if (updatedCommands > 0) {
+      console.info(`${chalk.cyanBright('[Bot]')} ${updatedCommands} command updated`);
+    }
+    if (registeredCommands > 0) {
+      console.info(`${chalk.cyanBright('[Bot]')} ${registeredCommands} command registered`);
+    }
+    if (removedCommands > 0) {
+      console.info(`${chalk.cyanBright('[Bot]')} ${removedCommands} command removed`);
+    }
   }
 
   // Loads and starts up the bot.

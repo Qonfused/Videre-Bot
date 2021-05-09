@@ -16,7 +16,7 @@ const RawEvent = {
       // Initial Deferred Response
       client.api.interactions(interaction.id, interaction.token).callback.post({
         data: { type: INTERACTION_RESPONSE_TYPE.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE },
-      })
+      });
 
       const { name, options } = interaction.data;
 
