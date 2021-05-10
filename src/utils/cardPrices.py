@@ -10,8 +10,14 @@ import seaborn as sns
 import sys, io, base64
 from tabulate import tabulate
 
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=RuntimeWarning)
+warnings.simplefilter(action='ignore', category=UserWarning)
+
 # Generate and return card price history
-def getPriceHistory(matchedName, set, time_interval = 7):
+def getPriceHistory(matchedName, set, time_interval = 14):
     global card_slug
     def findItem(data, item, match, attribute):
         for i in range(len(data)):
@@ -56,11 +62,23 @@ def getPriceHistory(matchedName, set, time_interval = 7):
         lambda x,y: pd.merge(x,y, on = "Date", how = "outer"),
         [low, average, market, high, foil, market_foil]
     )
-    combined_prices = combined_prices.sort_values(by = ["Date"], ascending = True)
     combined_prices["Date"] = pd.to_datetime(combined_prices["Date"], unit = "ms")
+    combined_prices = combined_prices.sort_values(by = ["Date"], ascending = True)
     combined_prices["Date"] = combined_prices["Date"].apply(lambda x: x.strftime("%b %d, %Y"))
+    combined_prices = combined_prices.set_index("Date")
 
-    combined_prices = combined_prices.tail(time_interval).set_index("Date")
+    # # Reduce outliers in prices
+    # def is_outlier(points, thresh=1000):
+    #     if len(points.shape) == 1:
+    #         points = points[:,None]
+    #     median = np.median(points, axis=0)
+    #     diff = np.sum((points - median)**2, axis=-1)
+    #     diff = np.sqrt(diff)
+    #     med_abs_deviation = np.median(diff)
+    #
+    #     modified_z_score = 0.6745 * diff / med_abs_deviation
+    #
+    #     return modified_z_score > thresh
 
     # Generate line plot for timeseries
     def render_fig_table(data, columns, xlabel, ylabel, title, fig_width = 11, fig_height = 4):
@@ -73,7 +91,11 @@ def getPriceHistory(matchedName, set, time_interval = 7):
             if (data[cols].iloc[-1] + data[cols].iloc[-2] > -1):
                 category_name += " (${:,.2f})".format(data[cols].iloc[-1])
 
-            ax.plot(data[cols], label = category_name.replace(" ($nan)", ""))
+            ax.plot(
+            data[cols][data[cols] < (data[cols].mean() + 1000)], #[~is_outlier(data[cols])]],
+            label = category_name.replace(" ($nan)", "")
+            )
+            if len(data) > 7: ax.xaxis.set_major_locator(plt.MaxNLocator(7))
             ax.legend()
             # ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
@@ -90,7 +112,7 @@ def getPriceHistory(matchedName, set, time_interval = 7):
 
     # Call plotting function
     plt_IObytes = render_fig_table(
-        combined_prices,
+        combined_prices.tail(time_interval),
         combined_prices.columns,
         xlabel = "Dates", ylabel = "TCGplayer Price (USD $)",
         title = f"Price History for { matchedName }",
@@ -138,8 +160,7 @@ CARDNAME = get_argv("cardname")
 SET = get_argv("set")
 
 try:
-    json = getPriceHistory(CARDNAME, SET)
-    print(json)
+    print(getPriceHistory(CARDNAME, SET))
 except:
     print("")
 

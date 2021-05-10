@@ -56,9 +56,6 @@ const Card = {
           throw new Error(`The requested card could not be found.`);
         }
 
-        const sets_response = await fetch(`https://api.scryfall.com/sets/${data.set}`);
-        const set_data = await sets_response.json();
-
         // Get and handle missing card printings
         const response_2 = await fetch(data.prints_search_uri);
         if (response_2.status !== 200) throw new Error(`No printings for the requested card could be found.`);
@@ -68,7 +65,7 @@ const Card = {
         let sets = printings['data'].map(({ set }) => set);
         let message = 'No match was found for the requested card in the specified set.';
         if (sets.length > 0) {
-          let url = `https://scryfall.com/search?as=grid&order=released&q=%21%22${data?.name}%22&unique=prints`;
+          let url = `https://scryfall.com/search?as=grid&order=released&q=%21%22${data?.name.replace(/\s/g, '%20')}%22&unique=prints`;
           message += `\nHowever, [${sets.length} available printings](${url}) were found.`;
         }
         if (sets.includes(set) !== true) return {
@@ -80,8 +77,7 @@ const Card = {
           footer: {
             text: [
                 `🖌 ${data.artist}`,
-                `# ${data.collector_number}/${set_data.printed_size}`,
-                `${data.set.toUpperCase()} (${data.lang.toUpperCase()})`,
+                `${data.set.toUpperCase()} (${data.lang.toUpperCase()}) #${data.collector_number}`,
                 data.rarity.replace(/^\w/, (c) => c.toUpperCase())
               ].join(' • ')
           },
@@ -94,8 +90,6 @@ const Card = {
       }
 
       const data = await response.json();
-      const sets_response = await fetch(`https://api.scryfall.com/sets/${data.set}`);
-      const set_data = await sets_response.json();
 
       const cardTitle = (!data?.card_faces) ? manamoji(
         client.guilds.resolve(config.emojiGuild),
@@ -110,8 +104,7 @@ const Card = {
 
       const footerText = [
           `🖌 ${data.artist}`,
-          `# ${data.collector_number}/${set_data.printed_size}`,
-          `${data.set.toUpperCase()} (${data.lang.toUpperCase()})`,
+          `${data.set.toUpperCase()} (${data.lang.toUpperCase()}) #${data.collector_number}`,
           data.rarity.replace(/^\w/, (c) => c.toUpperCase())
         ].join(' • ');
 
@@ -230,7 +223,7 @@ const Card = {
 
             let sets = printings['data'].map(({ set }) => set);
             if (sets.length > 0) {
-              let url = `https://scryfall.com/search?as=grid&order=released&q=%21%22${data?.name}%22&unique=prints`;
+              let url = `https://scryfall.com/search?as=grid&order=released&q=%21%22${data?.name.replace(/\s/g, '%20')}%22&unique=prints`;
               message.description += `\nHowever, [${sets.length-1} other available printings](${url}) were found.`;
             }
           }

@@ -192,6 +192,9 @@ class Bot extends Client {
     if (removedCommands > 0) {
       console.info(`${chalk.cyanBright('[Bot]')} ${removedCommands} command removed`);
     }
+    if (updatedCommands + registeredCommands + removedCommands === 0) {
+      console.info(`${chalk.cyanBright('[Bot]')} No commands changed`);
+    }
   }
 
   // Loads and starts up the bot.
