@@ -28,11 +28,12 @@ const RawEvent = {
         return object;
       }, {}) : {};
 
-      const output = await command.execute({ client, interaction, args });
+      let output = await command.execute({ client, interaction, args });
       if (!output) return;
+      if (!output?.embeds) output = validateMessage(output);
 
       // Send follow-up response through `WebhookClient`
-      new Discord.WebhookClient(client.user.id, interaction.token).send(validateMessage(output));
+      new Discord.WebhookClient(client.user.id, interaction.token).send(output);
 
       // return client.send(interaction, output);
     } catch (error) {

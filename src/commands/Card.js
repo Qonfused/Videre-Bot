@@ -3,6 +3,7 @@ import config from 'config';
 const fetch = require('node-fetch');
 
 import { manamoji } from 'utils/manamoji';
+// import { validateMessage } from 'utils/discord';
 
 const Card = {
   name: 'card',
@@ -96,7 +97,7 @@ const Card = {
       }
       let data = await response.json();
 
-      // Get cheapest (USD) printing.
+      // Get cheapest (USD) printing by default for price info.
       if (prices === true) {
         let sorted_prices = `https://api.scryfall.com/cards/search?q=!"${data.name}"+cheapest:usd`;
         if (set) sorted_prices += `+e:${set}`;
@@ -123,8 +124,9 @@ const Card = {
           data.rarity.replace(/^\w/, (c) => c.toUpperCase())
         ].join(' • ');
 
+      // Fetch Oracle Text only
       if (prices !== true && decks !== true) {
-
+        // Handle Single-Sided Cards
         if (!data?.card_faces) {
           let cardText = manamoji(
             client.guilds.resolve(config.emojiGuild),
@@ -147,7 +149,9 @@ const Card = {
               text: footerText
             },
           };
-        } else {
+        } 
+        // Handle Double-Sided Cards
+        else {
           let cardText = manamoji(
             client.guilds.resolve(config.emojiGuild),
             `**${data.card_faces[0].name}** ${data.card_faces[0].mana_cost}`
