@@ -20,6 +20,11 @@ const Card = {
       description: 'A specific 3-letter set code to limit the search to.',
       type: 'string',
     },
+    // {
+    //   name: 'collectors number',
+    //   description: 'A specific numeric collectors number to limit the search to.',
+    //   type: 'integer',
+    // },
     {
       name: 'prices',
       description: 'Flag to show card prices and price history instead.',
@@ -35,6 +40,7 @@ const Card = {
 
     const name = args?.name;
     const set = args?.set;
+    // const collectors_number = args?.collector_number;
     const prices = args?.prices;
     const decks = args?.decks;
 
@@ -88,8 +94,17 @@ const Card = {
         // Handle other miscellaneous errors
         throw new Error(`An error occured while fetching the requested card.`);
       }
+      let data = await response.json();
 
-      const data = await response.json();
+      // Get cheapest (USD) printing.
+      if (prices === true) {
+        let sorted_prices = `https://api.scryfall.com/cards/search?q=!"${data.name}"+cheapest:usd`;
+        if (set) sorted_prices += `+e:${set}`;
+        // if (collectors_number) += `+cn:${collectors_number}`
+        const response_1 = await fetch(sorted_prices);
+        let data_1 = await response_1.json();
+        if (response_1.status === 200) data = data_1.data[0];
+      }
 
       const cardTitle = (!data?.card_faces) ? manamoji(
         client.guilds.resolve(config.emojiGuild),
@@ -186,7 +201,7 @@ const Card = {
         const json = cardPrices.toString().length > 2 ? JSON.parse(cardPrices.toString()) : {};
         const imageStream = cardPrices.toString().length > 2 ? new Buffer.from(json?.graph, 'base64') : {};
 
-        const description = `Showing results for **${data.set_name}** (**${data.set.toUpperCase()}**):`;
+        const description = `Showing price history for **${data.set_name}** (**${data.set.toUpperCase()}**):`;
 
         let evalPrice = (item) => typeof item === 'object' ? '—' : (item > -1 ? item : '—');
 
