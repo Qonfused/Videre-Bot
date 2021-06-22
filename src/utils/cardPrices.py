@@ -99,7 +99,7 @@ def getPriceHistory(matchedName, set, time_interval = 14):
             ax.legend()
             # ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
-            # ax.set_title(title)
+            ax.set_title(title)
 
         # Write plot to bytes buffer
         buffer = io.BytesIO()
