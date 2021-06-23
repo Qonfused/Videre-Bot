@@ -1,10 +1,11 @@
-import chalk from 'chalk';
-import { group } from "d3-array";
+// import chalk from 'chalk';
+// import { group } from "d3-array";
 import { formats, eventTypes } from 'utils/magic';
 
 const Catalog = {
   name: 'catalog',
   description: "(WIP) Displays most recent events by format, type, and/or date.",
+  type: 'hidden',
   options: [
     {
       name: 'format',
@@ -27,26 +28,23 @@ const Catalog = {
       required: false,
     },
   ],
-  execute({ client }) {
-    // Query from database
-    // let data =
-    // Create array from nested InternMap
-    // let catalog = Array.from(d3.group(data, d => d.format, d => d.date));
+  execute({ client, args }) {
+
     try {
-      // return {
-      //   title: 'Catalog',
-      //   description:'',
-      //   // Map array from catalog object
-      //   // fields: [],
-      // };
+      //
     } catch (error) {
-      // Send full error stack to console
-      console.error(chalk.red(`/catalog >> ${error.stack}`));
-      // Send brief error message in Discord response
+      // console.error(
+      //   chalk.cyan(`[/catalog]`)+
+      //   chalk.grey(` format: `) + (!format ? chalk.white('None') : chalk.green(`\"${format}\"`))+
+      //   chalk.grey(` type: `) + (!type ? chalk.white('None') : chalk.green(`\"${type}\"`))+
+      //   chalk.grey(` set: `) + (!set ? chalk.white('None') : chalk.green(`\"${set}\"`))+
+      //   chalk.grey('\n>> ') + chalk.red(`Error: ${error.message}`)
+      // );
       return {
-        title: 'Catalog',
-        description: `An error occured while retrieving the events catalog.\n**>>** \`${error.message}\``,
+        title: 'Error',
+        description: error.message,
         color: 0xe74c3c,
+        ephemeral: true,
       };
     }
   },

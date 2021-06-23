@@ -1,34 +1,68 @@
-// Embed default properties.
+/**
+ * Embed default properties.
+ */
 export const EMBED_DEFAULTS = {
-  color: 0x3498db,
+  color: 0x049ef4,
 };
 
-// The type of interaction this request is.
+/**
+ * Discord-enforced message character and size limits.
+ */
+export const MESSAGE_LIMITS = {
+  CONTENT_LENGTH: 2000,
+  TITLE_LENGTH: 256,
+  DESC_LENGTH: 2048,
+  FIELD_LENGTH: 25,
+  FIELD_NAME_LENGTH: 256,
+  FIELD_VALUE_LENGTH: 1024,
+};
+
+/**
+ * The type of interaction this request is.
+ */
 export const INTERACTION_TYPE = {
-  // A ping.
+  /**
+   * A ping.
+   */
   PING: 1,
-  // A command invocation.
+  /**
+   * A command invocation.
+   */
   APPLICATION_COMMAND: 2,
 };
 
-// The type of response that is being sent.
+/**
+ * The type of response that is being sent.
+ */
 export const INTERACTION_RESPONSE_TYPE = {
-  // Acknowledge a `PING`.
+  /**
+   * Acknowledge a `PING`.
+   */
   PONG: 1,
-  // Respond with a message, showing the user's input.
+  /**
+   * Respond with a message, showing the user's input.
+   */
   CHANNEL_MESSAGE_WITH_SOURCE: 4,
-  // Acknowledge a command without sending a message, showing the user's input. Requires follow-up.
+  /**
+   * Acknowledge a command without sending a message, showing the user's input. Requires follow-up.
+   */
   DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE: 5,
 };
 
-// Flags that can be included in an Interaction Response.
+/**
+ * Flags that can be included in an Interaction Response.
+ */
 export const INTERACTION_RESPONSE_FLAGS = {
-  // Show the message only to the user that performed the interaction.
-  // Message does not persist between sessions.
+  /**
+   * Show the message only to the user that performed the interaction. Message
+   * does not persist between sessions.
+   */
   EPHEMERAL: 64, // 1 << 6
 };
 
-// Valid option `type` values.
+/**
+ * Valid option `type` values.
+ */
 export const COMMAND_OPTION_TYPES = {
   SUB_COMMAND: 1,
   SUB_COMMAND_GROUP: 2,

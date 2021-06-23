@@ -22,7 +22,7 @@
     "babel-plugin-module-resolver": "^4.1.0",
     "chalk": "4.1.0",
     "d3-array": "^2.12.1",
-    "discord.js": "12.5.3",
+    "discord.js": "^12.5.3",
     "dompurify": "^2.2.7",
     "dotenv": "8.2.0",
     "jsdom": "^16.5.3",

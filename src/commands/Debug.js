@@ -1,9 +1,10 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 
 const Debug = {
   name: 'debug',
-  description: "(WIP) Displays the bot's current uptime, cluster info, and latency.",
-  execute({ client }) {
+  description: "Displays the bot's current uptime, cluster info, and latency.",
+  type: 'guild',
+  execute({ client, interaction }) {
     try {
       // Get uptime in nearest days, hours, minutes and seconds
       let totalSeconds = client.uptime / 1000;
@@ -17,48 +18,50 @@ const Debug = {
 
       // Create array of these values to later filter out null values
       let formattedArray = [
-        days > 0 ? `${days} ${(days == 1 ? 'day' : 'days')}` : ``,
-        hours > 0 ? `${hours} ${(hours == 1 ? 'hour' : 'hours')}` : ``,
-        minutes > 0 ? `${minutes} ${(minutes == 1 ? 'minute' : 'minutes')}` : ``,
-        seconds > 0 ? `${seconds} ${(seconds == 1 ? 'second' : 'seconds')}` : ``,
+        days > 0 ? `${ days } ${ (days == 1 ? 'day' : 'days') }` : ``,
+        hours > 0 ? `${ hours } ${ (hours == 1 ? 'hour' : 'hours') }` : ``,
+        minutes > 0 ? `${ minutes } ${ (minutes == 1 ? 'minute' : 'minutes') }` : ``,
+        seconds > 0 ? `${ seconds } ${ (seconds == 1 ? 'second' : 'seconds') }` : ``,
       ];
+
+      let t = 0;
+      const uptime = formattedArray
+        .filter(Boolean)
+        .join(', ')
+        // Replace last comma with ' and' for fluency
+        .replace(/, ([^,]*)$/, ' and $1')
+        // Add linebreak after second instance of comma
+        .replace(/,/g, function (match) {
+          t++; return (t === 2) ? ",\n" : match;
+        }) + '.';
+
+      let interaction_timestamp = Number(BigInt(interaction.id) >> 22n) + 1420070400000;
 
       return {
         title: 'Debug',
         fields: [
           // Uptime since 'Ready' status
-          {
-            name: 'Current Uptime',
-            value:
-              formattedArray
-                .filter(Boolean)
-                .join(', ')
-                // Replace last comma with ' and' for fluency
-                .replace(/, ([^,]*)$/, ', and $1') + '.',
-            inline: false,
-          },
+          { name: 'Current Uptime', value: uptime, inline: false },
           // Various cluster information
-          { name: 'PID', value: `\`${process.pid}\``, inline: true },
-          { name: 'Cluster', value: `\`${'N/A'}\``, inline: true },
-          { name: 'Shard', value: `\`${'N/A'}\``, inline: true },
+          { name: 'PID', value: `\`${ process.pid }\``, inline: true },
+          { name: 'Cluster', value: `\`${ 0 }\``, inline: true },
+          { name: 'Shard', value: `\`${ 0 }\``, inline: true },
           // Latency between Discord bot and user
-          { name: 'Bot Latency', value: `\`${'N/A'} ms\``, inline: true },
+          { name: 'Bot Latency', value: `\`${ interaction_timestamp - Date.now() } ms\``, inline: true },
           // Latency between Discord bot and Discord API
-          {
-            name: 'API Latency',
-            value: `\`${Math.round(client.ws.ping)} ms\``,
-            inline: true,
-          },
+          { name: 'API Latency', value: `\`${ Math.round(client.ws.ping) } ms\``, inline: true },
         ],
       };
     } catch (error) {
-      // Send full error stack to console
-      console.error(chalk.red(`/debug >> ${error.stack}`));
-      // Send brief error message in Discord response
+      console.error(
+        chalk.cyan(`[/debug]`)+
+        chalk.grey('\n>> ') + chalk.red(`Error: ${error.message}`)
+      );
       return {
-        title: 'Debug',
-        description: `An error occured while retrieving this bot's debug info.\n**>>** \`${error.message}\``,
+        title: 'Error',
+        description: error.message,
         color: 0xe74c3c,
+        ephemeral: true,
       };
     }
   },

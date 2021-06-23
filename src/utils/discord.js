@@ -1,6 +1,12 @@
 import { JSDOM } from 'jsdom';
 import createDOMPurify from 'dompurify';
-import { EMBED_DEFAULTS, COMMAND_OPTION_TYPES } from 'constants';
+import { APIMessage } from 'discord.js';
+import {
+  MESSAGE_LIMITS,
+  EMBED_DEFAULTS,
+  INTERACTION_RESPONSE_FLAGS,
+  COMMAND_OPTION_TYPES,
+} from 'constants';
 
 // Shared sanitation context
 const { window } = new JSDOM('');
@@ -35,62 +41,80 @@ export const sanitize = message => {
   );
 };
 
-// Discord embed prop char limits
-const MAX_TITLE_LENGTH = 256;
-const MAX_DESC_LENGTH = 2048;
-
-const MAX_FIELD_LENGTH = 25;
-const MAX_FIELD_NAME_LENGTH = 256;
-const MAX_FIELD_VALUE_LENGTH = 1024;
+/**
+ * Converts a vanilla or camelCase string to SNAKE_CASE.
+ */
+export const snakeCase = string =>
+  string
+    .replace(/[A-Z]/g, char => `_${char}`)
+    .replace(/\s+|_+/g, '_')
+    .toUpperCase();
 
 /**
- * Generates an embed with default properties.
- *
- * @param {{ title: String, description: String, fields?: any[] }} props Overloaded embed properties.
+ * Validates embed fields.
  */
-export const validateEmbed = props => {
-  const { title, description, fields, ...rest } = props;
+export const validateFields = fields =>
+  fields?.reduce((fields, { name, value, ...rest }, index) => {
+    if (index < MESSAGE_LIMITS.FIELD_LENGTH)
+      fields.push({
+        name: name.slice(0, MESSAGE_LIMITS.FIELD_NAME_LENGTH),
+        value: value.slice(0, MESSAGE_LIMITS.FIELD_VALUE_LENGTH),
+        ...rest,
+      });
 
+    return fields;
+  }, []);
+
+/**
+ * Validates and generates an embed with default properties.
+ */
+export const validateEmbed = ({ url, title, description, fields, ...rest }) => ({
+  ...EMBED_DEFAULTS,
+  url,
+  title: title?.slice(0, MESSAGE_LIMITS.TITLE_LENGTH),
+  description: description?.slice(0, MESSAGE_LIMITS.DESC_LENGTH),
+  fields: validateFields(fields),
+  ...rest,
+});
+
+/**
+ * Parses and validates an interaction flags object.
+ */
+export const validateFlags = flags =>
+  Object.keys(flags).reduce(
+    (previous, flag) => INTERACTION_RESPONSE_FLAGS[snakeCase(flag)] || previous,
+    null
+  );
+
+/**
+ * Validates a message object or response and its flags.
+ */
+export const validateMessage = message => {
+  // No-op on empty or pre-processed message
+  if (!message || message instanceof APIMessage) return message;
+
+  // Early return if evaluating message string
+  if (typeof message === 'string')
+    return { content: message.slice(0, MESSAGE_LIMITS.CONTENT_LENGTH) };
+
+  // Handle message object and inline specifiers
   return {
-    ...EMBED_DEFAULTS,
-    title: title?.slice(0, MAX_TITLE_LENGTH),
-    description: description?.slice(0, MAX_DESC_LENGTH),
-    fields: fields?.reduce((fields, field, index) => {
-      if (index <= MAX_FIELD_LENGTH) {
-        const { name, value, ...rest } = field;
-
-        fields.push({
-          name: name.slice(0, MAX_FIELD_NAME_LENGTH),
-          value: value.slice(0, MAX_FIELD_VALUE_LENGTH),
-          ...rest,
-        });
-      }
-
-      return fields;
-    }, []),
-    ...rest,
+    files: message.files,
+    tts: Boolean(message.tts),
+    flags: validateFlags(message.flags || message),
+    content: message.content?.slice(0, MESSAGE_LIMITS.CONTENT_LENGTH) || '',
+    embeds: message.content ? null : [message.embeds || message].map(validateEmbed),
   };
 };
 
-// Discord message char limit
-const MAX_MESSAGE_LENGTH = 2000;
-
 /**
- * Validates a message response and its embed if available
- *
- * @param {String | Object} message Discord message response.
+ * Validates human-readable command meta into a Discord-ready object.
  */
-export const validateMessage = message =>
-  typeof message === 'object'
-    ? { embed: validateEmbed(message) }
-    : message.slice(0, MAX_MESSAGE_LENGTH);
-
-// Validates human-readable command meta into a Discord-ready object.
 export const validateCommand = ({ name, description, options }) => ({
   name,
   description,
   options: options?.map(({ type, ...rest }) => ({
-    type: COMMAND_OPTION_TYPES[type.toUpperCase()],
+    type: COMMAND_OPTION_TYPES[snakeCase(type)],
     ...rest,
   })),
 });

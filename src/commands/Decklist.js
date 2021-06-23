@@ -1,9 +1,10 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 import { formats } from 'utils/magic';
 
 const Decklist = {
   name: 'decklist',
   description: "(WIP) Displays decklist(s) filtered by format, archetype, player, date, and/or by a search query.",
+  type: 'hidden',
   options: [
     {
       name: 'format',
@@ -37,17 +38,23 @@ const Decklist = {
       required: false,
     },
   ],
-  execute({ client }) {
+  execute({ client, args }) {
     try {
       //
     } catch (error) {
-      // Send full error stack to console
-      console.error(chalk.red(`/decklist >> ${error.stack}`));
-      // Send brief error message in Discord response
+      // console.error(
+      //   chalk.cyan(`[/decklist]`)+
+      //   chalk.grey(` archetype: `) + (!archetype ? chalk.white('None') : chalk.green(`\"${archetype}\"`))+
+      //   chalk.grey(` player: `) + (!player ? chalk.white('None') : chalk.green(`\"${player}\"`))+
+      //   chalk.grey(` date: `) + (!date ? chalk.white('None') : chalk.green(`\"${date}\"`))+
+      //   chalk.grey(` query: `) + (!query ? chalk.white('None') : chalk.green(`\"${query}\"`))+
+      //   chalk.grey('\n>> ') + chalk.red(`Error: ${error.message}`)
+      // );
       return {
-        title: 'Decklist',
-        description: `An error occured while retrieving decklists.\n**>>** \`${error.message}\``,
+        title: 'Error',
+        description: error.message,
         color: 0xe74c3c,
+        ephemeral: true,
       };
     }
   },
